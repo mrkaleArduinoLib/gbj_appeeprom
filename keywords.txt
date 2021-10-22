@@ -1,0 +1,23 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+gbj_appeeprom	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+getPrmStart	KEYWORD2
+getPrmCount	KEYWORD2
+setPeriodPublish	KEYWORD2
+setSmoothFactor	KEYWORD2
+getPeriodPublish	KEYWORD2
+getSmoothFactor	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+VERSION	LITERAL1
