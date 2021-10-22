@@ -70,13 +70,14 @@ public:
   inline void setPeriodPublish(byte value = 0)
   {
     SERIAL_VALUE("setPeriodPublish", value);
-    setParameter(&periodPublish, periodPublish.init(value));
+    setParameter(&periodPublish, value);
   }
   inline void setSmoothFactor(float value = 0.0)
   {
     // Smooth factor is stored in EEPROM as the 10 multiple rounded to byte.
     SERIAL_VALUE("setSmoothFactor", value);
-    setParameter(&smoothFactor, smoothFactor.init((byte)(value * 10 + 0.5)));
+    value = value * 10 + 0.5;
+    setParameter(&smoothFactor, (byte)value);
   }
 
   // Public getters
@@ -102,11 +103,6 @@ protected:
       return val;
     }
     byte set(byte value)
-    {
-      val = constrain(value, min, max);
-      return get();
-    }
-    byte init(byte value)
     {
       val = (value < min || value > max) ? dft : value;
       return get();
@@ -139,7 +135,7 @@ protected:
     // Read parameters from EEPROM
     for (byte i = 0; i < prmCount_; i++)
     {
-      prmPointers[i]->init(EEPROM.read(prmStart_ + i));
+      prmPointers[i]->set(EEPROM.read(prmStart_ + i));
     }
     return getLastResult();
   }

@@ -145,7 +145,7 @@ The number of byte application parameters in EEPROM.
 
 #### Description
 The method sanitizes and saves to EEPROM the provided time period in milliseconds for publishing to IoT platform.
-- Method sanitizes provided value by limiting it to the range from minimal to maximal value.
+- Method sanitizes provided value by setting it to the default value if it is outside of range from minimal to maximal value.
 - Method stores the sanitized value in the parameter cache.
 - Method really saves the sanitized value to EEPROM only if it is new, i.e., it differs from value stored in cache before.
 
@@ -196,7 +196,7 @@ Time period to IoT platform in milliseconds.
 #### Description
 The method sanitizes and saves to EEPROM the provided smoothing factor for statistical smoothing by exponential filtering.
 - The factor is stored in EEPROM as the 10 multiple of real factor value and rounded to 1 decimal place in order to put it into one byte.
-- Method sanitizes provided value by limiting it to the range from minimal to maximal value.
+- Method sanitizes provided value by setting it to the default value if it is outside of range from minimal to maximal value.
 - Method really saves the sanitized value to EEPROM only if it is new, i.e., it differs from value stored in cache before.
 
 #### Syntax
