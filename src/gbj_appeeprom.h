@@ -72,19 +72,11 @@ public:
     SERIAL_VALUE("setPeriodPublish", value);
     setParameter(&periodPublish, value);
   }
-  inline void setSmoothFactor(float value = 0.0)
-  {
-    // Smooth factor is stored in EEPROM as the 10 multiple rounded to byte.
-    SERIAL_VALUE("setSmoothFactor", value);
-    value = value * 10 + 0.5;
-    setParameter(&smoothFactor, (byte)value);
-  }
 
   // Public getters
   inline unsigned int getPrmStart() { return prmStart_; }
   inline byte getPrmCount() { return prmCount_; }
   inline byte getPeriodPublish() { return periodPublish.get(); }
-  inline float getSmoothFactor() { return (float)smoothFactor.get() / 10.0; }
 
 private:
   unsigned int prmStart_;
@@ -110,7 +102,7 @@ protected:
   };
   // Generic parameters
   Parameter periodPublish = {.min = 5, .max = 30, .dft = 15};
-  Parameter smoothFactor = {.min = 1, .max = 10, .dft = 2};
+
   /*
     Initialization.
 

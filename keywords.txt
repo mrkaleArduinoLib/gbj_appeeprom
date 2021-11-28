@@ -13,9 +13,7 @@ gbj_appeeprom	KEYWORD1
 getPrmStart	KEYWORD2
 getPrmCount	KEYWORD2
 setPeriodPublish	KEYWORD2
-setSmoothFactor	KEYWORD2
 getPeriodPublish	KEYWORD2
-getSmoothFactor	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

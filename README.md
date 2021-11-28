@@ -18,12 +18,6 @@ Time period in millisecond for publishing telemetry data to IoT platform, usuall
 - Maximum: 30
 - Default: 15
 
-#### smoothFactor
-Factor for statistical smoothing of measured values by exponential filtering stored as the 10 multiple in order to store it as a byte. So that it is rounded to 1 decimal place. The conversion ensures corresponding [setter](#setPeriodPublish) and [getter](#getPeriodPublish).
-- Minimum: 0.1
-- Maximum: 1.0
-- Default: 0.2
-
 
 <a id="dependency"></a>
 
@@ -62,8 +56,6 @@ Factor for statistical smoothing of measured values by exponential filtering sto
 
 - [setPeriodPublish()](#setPeriodPublish)
 - [getPeriodPublish()](#getPeriodPublish)
-- [setSmoothFactor()](#setSmoothFactor)
-- [getSmoothFactor()](#getSmoothFactor)
 
 
 <a id="constructor"></a>
@@ -185,55 +177,5 @@ Time period to IoT platform in milliseconds.
 
 #### See also
 [setPeriodPublish()](#setPeriodPublish)
-
-[Back to interface](#interface)
-
-
-<a id="setSmoothFactor"></a>
-
-## setSmoothFactor()
-
-#### Description
-The method sanitizes and saves to EEPROM the provided smoothing factor for statistical smoothing by exponential filtering.
-- The factor is stored in EEPROM as the 10 multiple of real factor value and rounded to 1 decimal place in order to put it into one byte.
-- Method sanitizes provided value by setting it to the default value if it is outside of range from minimal to maximal value.
-- Method really saves the sanitized value to EEPROM only if it is new, i.e., it differs from value stored in cache before.
-
-#### Syntax
-    void setSmoothFactor(float value)
-
-#### Parameters
-- **value**: Smoothing factor for exponential filtering.
-  - *Valid values*: 0.1 ~ 1.0
-  - *Default value*: 0.2
-
-#### Returns
-None
-
-#### See also
-[getSmoothFactor()](#getSmoothFactor)
-
-[Back to interface](#interface)
-
-
-<a id="getSmoothFactor"></a>
-
-## getSmoothFactor()
-
-#### Description
-The method returns smoothing factor for statistical smoothing by exponential filtering.
-- The value is taken from the parameter cache in RAM, not read from EEPROM.
-
-#### Syntax
-    float getSmoothFactor()
-
-#### Parameters
-None
-
-#### Returns
-Smoothing factor for exponential filtering.
-
-#### See also
-[setSmoothFactor()](#setSmoothFactor)
 
 [Back to interface](#interface)
