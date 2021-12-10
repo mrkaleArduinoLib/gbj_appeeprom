@@ -6,14 +6,14 @@ for particular PlatformIO project. It provides common methods for project centri
 
 - Library has no virtual methods, so that it is useful for project libraries without internal timers.
 - Library utilizes error handling from the parent class.
-- Library works strictly with byte application parameters.
-- All application parameters, generic as well as defined by derived child project libraries are read from EEPROM in their `begin` method within `setup` function of a sketch.
+- Library works strictly with byte application parameters. If wider parameters are needed, e.g., integer ones, they have to be divided to two (or more) parameters for individual bytes (least and most significant ones). Then corresponding setter and getter should ensure calculation to desired parameter.
+- All application parameters, generic as well as defined by derived child project libraries, are read from EEPROM to the cache in RAM only in their `begin` method within `setup` function of a sketch as an initial configuration at start of a microcontroller. Then only new values of parameters are written to EEPROM, but reading is always from the cache. EEPROM serves as persistent parameters mirroring.
 
 ## Generic application parameters
 Library provides following generic application parameters that are utilized usually in most of projects.
 
 #### periodPublish
-Time period in millisecond for publishing telemetry data to IoT platform, usually _ThingsBoard_.
+Time period in milliseconds for publishing telemetry data to IoT platform.
 - Minimum: 5
 - Maximum: 30
 - Default: 15
@@ -59,6 +59,7 @@ Time period in millisecond for publishing telemetry data to IoT platform, usuall
 
 
 <a id="constructor"></a>
+
 ## gbj_appeeprom()
 
 #### Description
@@ -136,10 +137,10 @@ The number of byte application parameters in EEPROM.
 ## setPeriodPublish()
 
 #### Description
-The method sanitizes and saves to EEPROM the provided time period in milliseconds for publishing to IoT platform.
+The method sanitizes and saves the provided time period in milliseconds for publishing to an IoT platform.
 - Method sanitizes provided value by setting it to the default value if it is outside of range from minimal to maximal value.
 - Method stores the sanitized value in the parameter cache.
-- Method really saves the sanitized value to EEPROM only if it is new, i.e., it differs from value stored in cache before.
+- Method really saves the sanitized value to EEPROM only if it is new, i.e., it differs from value stored in the cache before.
 
 #### Syntax
     void setPeriodPublish(byte value)
@@ -164,7 +165,8 @@ None
 
 #### Description
 The method returns current time period in milliseconds for publishing to IoT platform.
-- The value is taken from the parameter cache in RAM, not read from EEPROM.
+- The value is taken from the parameter cache in RAM, not read from EEPROM directly.
+- The value (alongside with other parameters) is read from EEPROM just at the beginning of a sketch at microcontroller start.
 
 #### Syntax
     byte getPeriodPublish()
