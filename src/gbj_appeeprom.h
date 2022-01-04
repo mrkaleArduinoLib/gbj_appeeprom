@@ -18,14 +18,14 @@
 #define GBJ_APPEEPROM_H
 
 #if defined(__AVR__)
-#include <Arduino.h>
-#include <inttypes.h>
+  #include <Arduino.h>
+  #include <inttypes.h>
 #elif defined(ESP8266)
-#include <Arduino.h>
+  #include <Arduino.h>
 #elif defined(ESP32)
-#include <Arduino.h>
+  #include <Arduino.h>
 #elif defined(PARTICLE)
-#include <Particle.h>
+  #include <Particle.h>
 #endif
 #include "gbj_appcore.h"
 #include "gbj_serial_debug.h"
@@ -90,18 +90,27 @@ protected:
     const byte min;
     const byte max;
     const byte dft;
-    byte get()
-    {
-      return val;
-    }
+    byte get() { return constrain(val, min, max); }
     byte set(byte value)
     {
       val = (value < min || value > max) ? dft : value;
       return get();
     }
+    byte cycle()
+    {
+      val++;
+      val = val > max ? min : val;
+      return get();
+    }
+    byte cycleDown()
+    {
+      val--;
+      val = val < min ? max : val;
+      return get();
+    }
   };
   // Generic parameters
-  Parameter periodPublish = {.min = 5, .max = 30, .dft = 15};
+  Parameter periodPublish = { .min = 5, .max = 30, .dft = 15 };
 
   /*
     Initialization.
@@ -136,11 +145,16 @@ protected:
   {
     if (prmPointer->get() != prmPointer->set(value))
     {
-      EEPROM.write(prmStart_ + prmPointer->idx, prmPointer->get());
-#if defined(ESP8266) || defined(ESP32)
-      EEPROM.commit();
-#endif
+      storeParameter(prmPointer);
     }
+  }
+  // Save parameter to EEPROM
+  inline void storeParameter(Parameter *prmPointer)
+  {
+    EEPROM.write(prmStart_ + prmPointer->idx, prmPointer->get());
+#if defined(ESP8266) || defined(ESP32)
+    EEPROM.commit();
+#endif
   }
 };
 
