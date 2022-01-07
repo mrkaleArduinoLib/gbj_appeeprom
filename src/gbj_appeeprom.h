@@ -221,7 +221,7 @@ protected:
 #if defined(ESP8266) || defined(ESP32)
     EEPROM.commit();
 #endif
-    if (prmPointer->change())
+    if (handlerPrmStored_ && prmPointer->change())
     {
       handlerPrmStored_(prmPointer->idx);
     }
