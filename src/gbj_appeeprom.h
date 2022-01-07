@@ -39,6 +39,8 @@ class gbj_appeeprom : public gbj_appcore
 public:
   static const String VERSION;
 
+  typedef void Handler(byte idx);
+
   /*
     Constructor.
 
@@ -51,10 +53,18 @@ public:
       - Data type: non-negative integer
       - Default value: none
       - Limited range: 0 ~ 255
+    handlerPrmStored - Pointer to a function within a sketch that receives index
+      of a parameter, which has been currently stored to EEPROM and returns
+      no value. The handler is called right after writing to EEPROM.
+      - Data type: Handler
+      - Default value: 0
+      - Limited range: system address range
 
     RETURN: object
   */
-  inline explicit gbj_appeeprom(unsigned int prmStart, byte prmCount)
+  inline explicit gbj_appeeprom(unsigned int prmStart,
+                                byte prmCount,
+                                Handler *handlerPrmStored = 0)
   {
     unsigned int eeprom = 4096;
 #if defined(__AVR_ATmega328P__)
@@ -64,29 +74,66 @@ public:
 #endif
     prmStart_ = min(prmStart, eeprom - prmCount);
     prmCount_ = prmCount;
+    handlerPrmStored_ = handlerPrmStored;
   }
 
   // Public setters
+  inline void setPrmChangeAll()
+   {
+     for (byte i = 0; i < prmCount_; i++)
+     {
+       prmPointers_[i]->setChange();
+     }
+   }
+  inline void resetPrmChange(byte idx) { prmPointers_[idx]->resetChange(); }
+  inline void resetPrmChangeAll()
+   {
+     for (byte i = 0; i < prmCount_; i++)
+     {
+       prmPointers_[i]->resetChange();
+     }
+   }
+  // Public getters
+  inline unsigned int getPrmStart() { return prmStart_; }
+  inline byte getPrmCount() { return prmCount_; }
+  inline byte getPrmValue(byte idx) { return prmPointers_[idx]->get(); }
+  inline bool getPrmChange(byte idx) { return prmPointers_[idx]->change(); }
+  inline const char *getPrmName(byte idx) { return prmPointers_[idx]->name; }
+  inline byte getPrmIndex(char *name)
+  {
+    for (byte i = 0; i < getPrmCount(); i++)
+    {
+      if (name == prmPointers_[i]->name)
+      {
+        return i;
+        break;
+      }
+    }
+    return -1;
+  }
+
+
+  // Setters for generic parameters
   inline void setPeriodPublish(byte value = 0)
   {
     SERIAL_VALUE("setPeriodPublish", value);
     setParameter(&periodPublish, value);
   }
-
-  // Public getters
-  inline unsigned int getPrmStart() { return prmStart_; }
-  inline byte getPrmCount() { return prmCount_; }
+  // Getters for generic parameters
   inline byte getPeriodPublish() { return periodPublish.get(); }
 
 private:
   unsigned int prmStart_;
   byte prmCount_;
+  Handler *handlerPrmStored_;
 
 protected:
   struct Parameter
   {
     byte val;
     byte idx;
+    bool chg;
+    const char *name;
     const byte min;
     const byte max;
     const byte dft;
@@ -94,23 +141,34 @@ protected:
     byte set(byte value)
     {
       val = (value < min || value > max) ? dft : value;
+      chg = (val != value);
       return get();
     }
     byte cycle()
     {
       val++;
       val = val > max ? min : val;
+      chg = true;
       return get();
     }
     byte cycleDown()
     {
       val--;
       val = val < min ? max : val;
+      chg = true;
       return get();
     }
+    void setChange() { chg = true; }
+    void resetChange() { chg = false; }
+    bool change() { return chg; }
   };
+  Parameter **prmPointers_;
+
   // Generic parameters
-  Parameter periodPublish = { .min = 5, .max = 30, .dft = 15 };
+  Parameter periodPublish = { .name = "periodPublish",
+                              .min = 5,
+                              .max = 30,
+                              .dft = 15 };
 
   /*
     Initialization.
@@ -127,8 +185,9 @@ protected:
 
     RETURN: Result code.
   */
-  inline ResultCodes begin(Parameter *prmPointers[])
+  inline ResultCodes begin(Parameter **prmPointers)
   {
+    prmPointers_ = prmPointers;
     SERIAL_TITLE("begin");
 #if defined(ESP8266) || defined(ESP32)
     EEPROM.begin(constrain(prmCount_, 4, 4096));
@@ -136,10 +195,12 @@ protected:
     // Read parameters from EEPROM
     for (byte i = 0; i < prmCount_; i++)
     {
+      prmPointers[i]->idx = i;
       prmPointers[i]->set(EEPROM.read(prmStart_ + i));
     }
-    return getLastResult();
+    return setLastResult();
   }
+
   // Parameter setter
   inline void setParameter(Parameter *prmPointer, byte value)
   {
@@ -148,6 +209,11 @@ protected:
       storeParameter(prmPointer);
     }
   }
+  inline void setParameter(byte idx, byte value)
+  {
+    setParameter(prmPointers_[idx], value);
+  }
+
   // Save parameter to EEPROM
   inline void storeParameter(Parameter *prmPointer)
   {
@@ -155,7 +221,12 @@ protected:
 #if defined(ESP8266) || defined(ESP32)
     EEPROM.commit();
 #endif
+    if (prmPointer->change())
+    {
+      handlerPrmStored_(prmPointer->idx);
+    }
   }
+  inline void storeParameter(byte idx) { storeParameter(prmPointers_[idx]); }
 };
 
 #endif
