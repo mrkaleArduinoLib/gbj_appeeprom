@@ -54,8 +54,7 @@ public:
       - Default value: none
       - Limited range: 0 ~ 255
     onSave - Pointer to a callback function that receives index of a parameter,
-      which has been currently stored to EEPROM and returns
-      no value.
+      which has been currently stored to EEPROM and returns no value.
       - Data type: Handler
       - Default value: 0
       - Limited range: system address range
@@ -77,16 +76,30 @@ public:
     onSave_ = onSave;
   }
 
-  // Setters for generic parameters
-  inline void setPeriodPublish(byte value = 0)
+  // Reset all parameters to default values
+  void reset()
   {
-    SERIAL_VALUE("setPeriodPublish", value);
-    setParameter(&periodPublish, value);
+    SERIAL_TITLE("reset");
+    for (byte i = 0; i < prmCount_; i++)
+    {
+      setParameter(i, 0xFF);
+#ifndef SERIAL_NODEBUG
+      String msg = "[" + String(i) + "]: " + String(getPrmValue(i));
+      SERIAL_LOG1(msg);
+#endif
+    }
   }
+
+  // Setters for generic parameters
   inline void setMcuRestarts(byte value = 0)
   {
     SERIAL_VALUE("setMcuRestarts", value);
     setParameter(&mcuRestarts, value);
+  }
+  inline void setPeriodPublish(byte value = 0)
+  {
+    SERIAL_VALUE("setPeriodPublish", value);
+    setParameter(&periodPublish, value);
   }
 
   // Getters
@@ -94,8 +107,8 @@ public:
   inline byte getPrmCount() { return prmCount_; }
   inline byte getPrmValue(byte idx) { return prmPointers_[idx]->get(); }
   // Generic parameters
-  inline byte getPeriodPublish() { return periodPublish.get(); }
   inline byte getMcuRestarts() { return mcuRestarts.get(); }
+  inline byte getPeriodPublish() { return periodPublish.get(); }
 
 protected:
   struct Parameter
@@ -132,8 +145,8 @@ protected:
   Parameter **prmPointers_;
 
   // Generic parameters (255 (0xFF, -1) is factory value)
-  Parameter periodPublish = { .min = 5, .max = 30, .dft = 15 };
   Parameter mcuRestarts = { .min = 0, .max = 254, .dft = 0 };
+  Parameter periodPublish = { .min = 5, .max = 30, .dft = 15 };
 
   /*
     Initialization.
@@ -162,6 +175,10 @@ protected:
     {
       prmPointers[i]->idx = i;
       prmPointers[i]->set(EEPROM.read(prmStart_ + i));
+#ifndef SERIAL_NODEBUG
+      String msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
+      SERIAL_LOG1(msg);
+#endif
     }
     return setLastResult();
   }

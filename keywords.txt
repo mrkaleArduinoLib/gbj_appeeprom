@@ -11,6 +11,7 @@ Handler	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
+reset	KEYWORD2
 getPrmStart	KEYWORD2
 getPrmCount	KEYWORD2
 getPrmValue	KEYWORD2

@@ -54,6 +54,7 @@ Number of restarts of a microcontroller. It is utilized as the MCU restarts coun
 ## Interface
 
 - [gbj_appeeprom()](#gbj_appeeprom)
+- [reset()](#reset)
 - [getPrmStart()](#getPrmStart)
 - [getPrmCount()](#getPrmCount)
 - [getPrmValue()](#getPrmValue)
@@ -131,6 +132,25 @@ Object enabling EEPROM management.
 
 #### See also
 [Handler(byte)](#handler)
+
+[Back to interface](#interface)
+
+
+<a id="reset"></a>
+
+## reset()
+
+#### Description
+The method sets all application parameters to their default values. It is suitable for unknown or changed order of those parameters in EEPROM, e.g., at using an already used EEPROM taken from another project. So, the method should be used once after aforementioned change.
+
+#### Syntax
+    void reset()
+
+#### Parameters
+None
+
+#### Returns
+None
 
 [Back to interface](#interface)
 
