@@ -6,14 +6,18 @@
 # Datatypes (KEYWORD1)
 #######################################
 gbj_appeeprom	KEYWORD1
+Handler	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 getPrmStart	KEYWORD2
 getPrmCount	KEYWORD2
+getPrmValue	KEYWORD2
 setPeriodPublish	KEYWORD2
 getPeriodPublish	KEYWORD2
+setMcuRestarts	KEYWORD2
+getMcuRestarts	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
