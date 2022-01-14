@@ -19,11 +19,14 @@
 
 #if defined(__AVR__)
   #include <Arduino.h>
+  #include <avr/pgmspace.h>
   #include <inttypes.h>
 #elif defined(ESP8266)
   #include <Arduino.h>
+  #include <pgmspace.h>
 #elif defined(ESP32)
   #include <Arduino.h>
+  #include <pgmspace.h>
 #elif defined(PARTICLE)
   #include <Particle.h>
 #endif
@@ -39,7 +42,7 @@ class gbj_appeeprom : public gbj_appcore
 public:
   static const String VERSION;
 
-  typedef void Handler(byte idx);
+  typedef void Handler(byte);
 
   /*
     Constructor.
@@ -53,9 +56,9 @@ public:
       - Data type: non-negative integer
       - Default value: none
       - Limited range: 0 ~ 255
-    handlerPrmStored - Pointer to a function within a sketch that receives index
-      of a parameter, which has been currently stored to EEPROM and returns
-      no value. The handler is called right after writing to EEPROM.
+    onSave - Pointer to a callback function that receives index of a parameter,
+      which has been currently stored to EEPROM and returns
+      no value.
       - Data type: Handler
       - Default value: 0
       - Limited range: system address range
@@ -64,7 +67,7 @@ public:
   */
   inline explicit gbj_appeeprom(unsigned int prmStart,
                                 byte prmCount,
-                                Handler *handlerPrmStored = 0)
+                                Handler *onSave = 0)
   {
     unsigned int eeprom = 4096;
 #if defined(__AVR_ATmega328P__)
@@ -74,44 +77,8 @@ public:
 #endif
     prmStart_ = min(prmStart, eeprom - prmCount);
     prmCount_ = prmCount;
-    handlerPrmStored_ = handlerPrmStored;
+    onSave_ = onSave;
   }
-
-  // Public setters
-  inline void setPrmChangeAll()
-   {
-     for (byte i = 0; i < prmCount_; i++)
-     {
-       prmPointers_[i]->setChange();
-     }
-   }
-  inline void resetPrmChange(byte idx) { prmPointers_[idx]->resetChange(); }
-  inline void resetPrmChangeAll()
-   {
-     for (byte i = 0; i < prmCount_; i++)
-     {
-       prmPointers_[i]->resetChange();
-     }
-   }
-  // Public getters
-  inline unsigned int getPrmStart() { return prmStart_; }
-  inline byte getPrmCount() { return prmCount_; }
-  inline byte getPrmValue(byte idx) { return prmPointers_[idx]->get(); }
-  inline bool getPrmChange(byte idx) { return prmPointers_[idx]->change(); }
-  inline const char *getPrmName(byte idx) { return prmPointers_[idx]->name; }
-  inline byte getPrmIndex(char *name)
-  {
-    for (byte i = 0; i < getPrmCount(); i++)
-    {
-      if (name == prmPointers_[i]->name)
-      {
-        return i;
-        break;
-      }
-    }
-    return -1;
-  }
-
 
   // Setters for generic parameters
   inline void setPeriodPublish(byte value = 0)
@@ -119,13 +86,19 @@ public:
     SERIAL_VALUE("setPeriodPublish", value);
     setParameter(&periodPublish, value);
   }
-  // Getters for generic parameters
-  inline byte getPeriodPublish() { return periodPublish.get(); }
+  inline void setMcuRestarts(byte value = 0)
+  {
+    SERIAL_VALUE("setMcuRestarts", value);
+    setParameter(&mcuRestarts, value);
+  }
 
-private:
-  unsigned int prmStart_;
-  byte prmCount_;
-  Handler *handlerPrmStored_;
+  // Getters
+  inline unsigned int getPrmStart() { return prmStart_; }
+  inline byte getPrmCount() { return prmCount_; }
+  inline byte getPrmValue(byte idx) { return prmPointers_[idx]->get(); }
+  // Generic parameters
+  inline byte getPeriodPublish() { return periodPublish.get(); }
+  inline byte getMcuRestarts() { return mcuRestarts.get(); }
 
 protected:
   struct Parameter
@@ -133,7 +106,6 @@ protected:
     byte val;
     byte idx;
     bool chg;
-    const char *name;
     const byte min;
     const byte max;
     const byte dft;
@@ -158,17 +130,13 @@ protected:
       chg = true;
       return get();
     }
-    void setChange() { chg = true; }
-    void resetChange() { chg = false; }
     bool change() { return chg; }
   };
   Parameter **prmPointers_;
 
-  // Generic parameters
-  Parameter periodPublish = { .name = "periodPublish",
-                              .min = 5,
-                              .max = 30,
-                              .dft = 15 };
+  // Generic parameters (255 (0xFF, -1) is factory value)
+  Parameter periodPublish = { .min = 5, .max = 30, .dft = 15 };
+  Parameter mcuRestarts = { .min = 0, .max = 254, .dft = 0 };
 
   /*
     Initialization.
@@ -221,12 +189,17 @@ protected:
 #if defined(ESP8266) || defined(ESP32)
     EEPROM.commit();
 #endif
-    if (handlerPrmStored_ && prmPointer->change())
+    if (onSave_ && prmPointer->change())
     {
-      handlerPrmStored_(prmPointer->idx);
+      onSave_(prmPointer->idx);
     }
   }
   inline void storeParameter(byte idx) { storeParameter(prmPointers_[idx]); }
+
+private:
+  unsigned int prmStart_;
+  byte prmCount_;
+  Handler *onSave_;
 };
 
 #endif
