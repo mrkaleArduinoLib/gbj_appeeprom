@@ -146,7 +146,7 @@ protected:
 
   // Generic parameters (255 (0xFF, -1) is factory value)
   Parameter mcuRestarts = { .min = 0, .max = 254, .dft = 0 };
-  Parameter periodPublish = { .min = 5, .max = 30, .dft = 15 };
+  Parameter periodPublish = { .min = 5, .max = 30, .dft = 12 };
 
   /*
     Initialization.
