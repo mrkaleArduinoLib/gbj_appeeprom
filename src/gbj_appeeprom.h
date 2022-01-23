@@ -126,17 +126,29 @@ protected:
       chg = (val != value);
       return get();
     }
-    byte cycle()
+    byte cycleUp()
     {
-      val++;
-      val = val > max ? min : val;
+      if (val == max)
+      {
+        val = min;
+      }
+      else
+      {
+        val++;
+      }
       chg = true;
       return get();
     }
     byte cycleDown()
     {
-      val--;
-      val = val < min ? max : val;
+      if (val == min)
+      {
+        val = max;
+      }
+      else
+      {
+        val--;
+      }
       chg = true;
       return get();
     }
