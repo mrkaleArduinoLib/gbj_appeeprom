@@ -84,7 +84,7 @@ public:
     {
       setParameter(i, 0xFF);
 #ifndef SERIAL_NODEBUG
-      String msg = "[" + String(i) + "]: " + String(getPrmValue(i));
+      String msg = "[" + String(i) + "]: " + String(getParameter(i));
       SERIAL_LOG1(msg);
 #endif
     }
@@ -105,7 +105,7 @@ public:
   // Getters
   inline unsigned int getPrmStart() { return prmStart_; }
   inline byte getPrmCount() { return prmCount_; }
-  inline byte getPrmValue(byte idx) { return prmPointers_[idx]->get(); }
+  inline byte getParameter(byte idx) { return prmPointers_[idx]->get(); }
   // Generic parameters
   inline byte getMcuRestarts() { return mcuRestarts.get(); }
   inline byte getPeriodPublish() { return periodPublish.get(); }
@@ -153,6 +153,7 @@ protected:
       return get();
     }
     bool change() { return chg; }
+    byte index() { return idx; }
   };
   Parameter **prmPointers_;
 
@@ -211,13 +212,13 @@ protected:
   // Save parameter to EEPROM
   inline void storeParameter(Parameter *prmPointer)
   {
-    EEPROM.write(prmStart_ + prmPointer->idx, prmPointer->get());
+    EEPROM.write(prmStart_ + prmPointer->index(), prmPointer->get());
 #if defined(ESP8266) || defined(ESP32)
     EEPROM.commit();
 #endif
     if (onSave_ && prmPointer->change())
     {
-      onSave_(prmPointer->idx);
+      onSave_(prmPointer->index());
     }
   }
   inline void storeParameter(byte idx) { storeParameter(prmPointers_[idx]); }
