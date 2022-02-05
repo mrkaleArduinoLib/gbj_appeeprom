@@ -8,5 +8,14 @@
   },
   "version": "1.0.0",
   "frameworks": "arduino",
-  "platforms": ["atmelavr", "atmelsam", "espressif8266", "espressif32"]
+  "platforms": [
+    "atmelavr",
+    "atmelsam",
+    "espressif8266",
+    "espressif32"
+  ],
+  "dependencies": {
+    "mrkaleArduinoLib/gbj_appcore": "*",
+    "mrkaleArduinoLib/gbj_serial_debug": "*"
+  }
 }

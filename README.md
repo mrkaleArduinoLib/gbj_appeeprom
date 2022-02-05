@@ -38,6 +38,9 @@ Time period in milliseconds for publishing telemetry data to an IoT platform.
 <a id="dependency"></a>
 
 ## Dependency
+* **gbj\_appcore**: Parent library for all application libraries loaded from the file `gbj_appcore.h`.
+* **gbj\_serial\_debug**: Auxilliary library for debug serial output loaded from the file `gbj_serial_debug.h`. It enables to exclude serial outputs from final compilation.
+* **EEPROM**: System library for EEPROM management loaded from the file `EEPROM.h`.
 
 #### Arduino platform
 * **Arduino.h**: Main include file for the Arduino SDK.
@@ -124,24 +127,24 @@ None
 The structure with members and member methods as a template of an application parameter.
 * An application parameter as an instance of this structure acts as a parameter cache for the EEPROM.
 * Only changed parameter values are really written to the EEPROM.
-* A parameter value is read only from the cache.
+* A parameter value is normally read from the cache only.
 * The parameter cache is initialized by reading parameter value from EEPROM just at setup of an application.
 
 #### Members
-* byte **val**: Parameter value as a cache.
-* byte **idx**: Sequence order of a parameter in an array of parameter pointers.
-* bool **chg**: Flag about changing of the value. It is utilized for launching handler and written to the EEPROM.
-* const byte **min**: Minimal valid value of a parameter. It is initialized at a parameter definition.
-* const byte **max**: Maximal valid value of a parameter. It is initialized at a parameter definition.
-* const byte **dft**: Default value of a parameter. It is initialized at a parameter definition. It is used when the provided value for storing to the EEPROM or read from it is outside valid range (min ~ max).
+* **byte val**: Parameter value as a cache.
+* **byte idx**: Sequence order of a parameter in an array of parameter pointers.
+* **bool chg**: Flag about changing of the value. It is utilized for launching handler and written to the EEPROM.
+* **const byte min**: Minimal valid value of a parameter. It is initialized at a parameter definition.
+* **const byte max**: Maximal valid value of a parameter. It is initialized at a parameter definition.
+* **const byte dft**: Default value of a parameter. It is initialized at a parameter definition. It is used when the provided value for storing to the EEPROM or read from it is outside valid range (min ~ max).
 
 #### Member methods
-* byte **get()**: Getter of cached parameter value. It is always constrained to valid range. If cached value is lower than minimum, this minimum is returned. If cached value is greater than maximum, this maximum is returned.
-* byte **set(byte value)**: Setter of cache parameter value as an argument. Provided value is sanitized with valid range. If it is lower than minimum or greater than maximum, the default value is cached. If this sanitized value differs from already cached value, the change flag _chg_ is set. The setter returns cached value by calling its getter.
-* byte **cycleUp()**: Increaser of cache parameter value. If cached value is equal to maximum, it returns minimum, else it returns increased cached value by 1.
-* byte **cycleDown()**: Decreaser of cache parameter value. If cached value is equal to minimum, it returns maximum, else it returns decreased cached value by 1.
-* bool **change()**: Getter of member _chg_. Suitable for using in project specific libraries without need to know name of the member.
-* byte **index()**: Getter of member _idx_. Suitable for using in project specific libraries without need to know name of the member.
+* **byte get()**: Getter of cached parameter value. It is always constrained to valid range. If cached value is lower than minimum, this minimum is returned. If cached value is greater than maximum, this maximum is returned.
+* **byte set(byte value)**: Setter of cache parameter value as an argument. Provided value is sanitized with valid range. If it is lower than minimum or greater than maximum, the default value is cached. If this sanitized value differs from already cached value, the change flag _chg_ is set. The setter returns cached value by calling its getter.
+* **byte cycleUp()**: Increaser of cache parameter value. If cached value is equal to maximum, it returns minimum, else it returns increased cached value by 1.
+* **byte cycleDown()**: Decreaser of cache parameter value. If cached value is equal to minimum, it returns maximum, else it returns decreased cached value by 1.
+* **bool change()**: Getter of member _chg_. Suitable for using in project specific libraries without need to know name of the member.
+* **byte index()**: Getter of member _idx_. Suitable for using in project specific libraries without need to know name of the member.
 
 #### Example
 This example presents the template for defining parameters. Generic ones in protected section of this library and application ones in private section of project specific libraries.
