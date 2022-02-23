@@ -37,7 +37,7 @@
 class gbj_appeeprom : public gbj_appcore
 {
 public:
-  static const String VERSION;
+  const String VERSION = "GBJ_APPEEPROM 1.0.0";
 
   typedef void Handler(byte);
 
