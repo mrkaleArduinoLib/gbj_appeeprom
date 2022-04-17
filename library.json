@@ -1,12 +1,12 @@
 {
   "name": "gbj_appeeprom",
   "keywords": "application",
-  "description": "Library processes application parameters stored in EEPROM and provides some generic (universal) parameters.",
+  "description": "Library processes application parameters stored in EEPROM.",
   "repository": {
     "type": "git",
     "url": "https://github.com/mrkaleArduinoLib/gbj_appeeprom.git"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "frameworks": "arduino",
   "platforms": [
     "atmelavr",

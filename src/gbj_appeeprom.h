@@ -37,9 +37,60 @@
 class gbj_appeeprom : public gbj_appcore
 {
 public:
-  const String VERSION = "GBJ_APPEEPROM 1.0.0";
+  const char *VERSION = "GBJ_APPEEPROM 1.1.0";
 
-  typedef void Handler(byte);
+  struct Parameter
+  {
+    byte val;
+    unsigned int mem;
+    const byte min;
+    const byte max;
+    const byte dft;
+    byte get() { return constrain(val, min, max); }
+    byte set(byte value)
+    {
+      value = (value < min || value > max) ? dft : value;
+      if (val != value)
+      {
+        val = value;
+        save();
+      };
+      return get();
+    }
+    byte cycleUp()
+    {
+      if (val == max)
+      {
+        val = min;
+      }
+      else
+      {
+        val++;
+      }
+      save();
+      return get();
+    }
+    byte cycleDown()
+    {
+      if (val == min)
+      {
+        val = max;
+      }
+      else
+      {
+        val--;
+      }
+      save();
+      return get();
+    }
+    void save()
+    {
+      EEPROM.write(mem, get());
+#if defined(ESP8266) || defined(ESP32)
+      EEPROM.commit();
+#endif
+    }
+  };
 
   /*
     Constructor.
@@ -53,17 +104,10 @@ public:
       - Data type: non-negative integer
       - Default value: none
       - Limited range: 0 ~ 255
-    onSave - Pointer to a callback function that receives index of a parameter,
-      which has been currently stored to EEPROM and returns no value.
-      - Data type: Handler
-      - Default value: 0
-      - Limited range: system address range
 
     RETURN: object
   */
-  inline explicit gbj_appeeprom(unsigned int prmStart,
-                                byte prmCount,
-                                Handler *onSave = 0)
+  inline explicit gbj_appeeprom(unsigned int prmStart, byte prmCount)
   {
     unsigned int eeprom = 4096;
 #if defined(__AVR_ATmega328P__)
@@ -73,7 +117,6 @@ public:
 #endif
     prmStart_ = min(prmStart, eeprom - prmCount);
     prmCount_ = prmCount;
-    onSave_ = onSave;
   }
 
   // Reset all parameters to default values
@@ -82,85 +125,20 @@ public:
     SERIAL_TITLE("reset");
     for (byte i = 0; i < prmCount_; i++)
     {
-      setParameter(i, 0xFF);
+      prmPointers_[i]->set(0xFF);
 #ifndef SERIAL_NODEBUG
-      String msg = "[" + String(i) + "]: " + String(getParameter(i));
+      String msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
       SERIAL_LOG1(msg);
 #endif
     }
   }
 
-  // Setters for generic parameters
-  inline void setMcuRestarts(byte value = 0)
-  {
-    SERIAL_VALUE("setMcuRestarts", value);
-    setParameter(&mcuRestarts, value);
-  }
-  inline void setPeriodPublish(byte value = 0)
-  {
-    SERIAL_VALUE("setPeriodPublish", value);
-    setParameter(&periodPublish, value);
-  }
-
   // Getters
   inline unsigned int getPrmStart() { return prmStart_; }
   inline byte getPrmCount() { return prmCount_; }
-  inline byte getParameter(byte idx) { return prmPointers_[idx]->get(); }
-  // Generic parameters
-  inline byte getMcuRestarts() { return mcuRestarts.get(); }
-  inline byte getPeriodPublish() { return periodPublish.get(); }
 
 protected:
-  struct Parameter
-  {
-    byte val;
-    byte idx;
-    bool chg;
-    const byte min;
-    const byte max;
-    const byte dft;
-    byte get() { return constrain(val, min, max); }
-    byte set(byte value)
-    {
-      val = (value < min || value > max) ? dft : value;
-      chg = (val != value);
-      return get();
-    }
-    byte cycleUp()
-    {
-      if (val == max)
-      {
-        val = min;
-      }
-      else
-      {
-        val++;
-      }
-      chg = true;
-      return get();
-    }
-    byte cycleDown()
-    {
-      if (val == min)
-      {
-        val = max;
-      }
-      else
-      {
-        val--;
-      }
-      chg = true;
-      return get();
-    }
-    bool change() { return chg; }
-    byte index() { return idx; }
-  };
   Parameter **prmPointers_;
-
-  // Generic parameters (255 (0xFF, -1) is factory value)
-  Parameter mcuRestarts = { .min = 0, .max = 254, .dft = 0 };
-  Parameter periodPublish = { .min = 5, .max = 30, .dft = 12 };
-
   /*
     Initialization.
 
@@ -186,8 +164,9 @@ protected:
     // Read parameters from EEPROM
     for (byte i = 0; i < prmCount_; i++)
     {
-      prmPointers[i]->idx = i;
-      prmPointers[i]->set(EEPROM.read(prmStart_ + i));
+      prmPointers_[i]->mem = prmStart_ + i;
+      prmPointers_[i]->val = EEPROM.read(prmPointers_[i]->mem);
+      prmPointers_[i]->set(prmPointers_[i]->val);
 #ifndef SERIAL_NODEBUG
       String msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
       SERIAL_LOG1(msg);
@@ -196,37 +175,9 @@ protected:
     return setLastResult();
   }
 
-  // Parameter setter
-  inline void setParameter(Parameter *prmPointer, byte value)
-  {
-    if (prmPointer->get() != prmPointer->set(value))
-    {
-      storeParameter(prmPointer);
-    }
-  }
-  inline void setParameter(byte idx, byte value)
-  {
-    setParameter(prmPointers_[idx], value);
-  }
-
-  // Save parameter to EEPROM
-  inline void storeParameter(Parameter *prmPointer)
-  {
-    EEPROM.write(prmStart_ + prmPointer->index(), prmPointer->get());
-#if defined(ESP8266) || defined(ESP32)
-    EEPROM.commit();
-#endif
-    if (onSave_ && prmPointer->change())
-    {
-      onSave_(prmPointer->index());
-    }
-  }
-  inline void storeParameter(byte idx) { storeParameter(prmPointers_[idx]); }
-
 private:
   unsigned int prmStart_;
   byte prmCount_;
-  Handler *onSave_;
 };
 
 #endif
