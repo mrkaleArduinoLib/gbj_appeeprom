@@ -37,7 +37,7 @@
 class gbj_appeeprom : public gbj_appcore
 {
 public:
-  const char *VERSION = "GBJ_APPEEPROM 1.1.0";
+  const char *VERSION = "GBJ_APPEEPROM 1.2.0";
 
   struct Parameter
   {
@@ -100,30 +100,19 @@ public:
       - Data type: non-negative integer
       - Default value: none
       - Limited range: 0 ~ 65535
-    prmCount - The number of byte application parameters to process.
-      - Data type: non-negative integer
-      - Default value: none
-      - Limited range: 0 ~ 255
 
     RETURN: object
   */
-  inline explicit gbj_appeeprom(unsigned int prmStart, byte prmCount)
+  inline explicit gbj_appeeprom(unsigned int prmStart)
   {
-    unsigned int eeprom = 4096;
-#if defined(__AVR_ATmega328P__)
-    eeprom = 1024;
-#elif defined(PARTICLE)
-    eeprom = 2047;
-#endif
-    prmStart_ = min(prmStart, eeprom - prmCount);
-    prmCount_ = prmCount;
+    prmStart_ = prmStart;
   }
 
   // Reset all parameters to default values
   void reset()
   {
     SERIAL_TITLE("reset");
-    for (byte i = 0; i < prmCount_; i++)
+    for (byte i = 0; i < prmPointers_.size(); i++)
     {
       prmPointers_[i]->set(0xFF);
 #ifndef SERIAL_NODEBUG
@@ -135,10 +124,10 @@ public:
 
   // Getters
   inline unsigned int getPrmStart() { return prmStart_; }
-  inline byte getPrmCount() { return prmCount_; }
+  inline byte getPrmCount() { return prmPointers_.size(); }
 
 protected:
-  Parameter **prmPointers_;
+  std::vector<Parameter *> prmPointers_;
   /*
     Initialization.
 
@@ -147,22 +136,29 @@ protected:
     parameters from EEPROM.
 
     PARAMETERS:
-    pointers - Array of pointers to parameters structures.
+    prmPointers - Array of pointers to parameters' structures.
       - Data type: pointer to Parameter
       - Default value: none
       - Limited range: none
 
     RETURN: Result code.
   */
-  inline ResultCodes begin(Parameter **prmPointers)
+  inline ResultCodes begin(const std::vector<Parameter *>& prmPointers)
   {
     prmPointers_ = prmPointers;
     SERIAL_TITLE("begin");
-#if defined(ESP8266) || defined(ESP32)
-    EEPROM.begin(constrain(prmCount_, 4, 4096));
+    unsigned int eeprom = 4096;
+#if defined(__AVR_ATmega328P__)
+    eeprom = 1024;
+#elif defined(PARTICLE)
+    eeprom = 2047;
 #endif
+#if defined(ESP8266) || defined(ESP32)
+    EEPROM.begin(constrain(prmPointers_.size(), 4, 4096));
+#endif
+    prmStart_ = min(prmStart_, eeprom - prmPointers_.size());
     // Read parameters from EEPROM
-    for (byte i = 0; i < prmCount_; i++)
+    for (byte i = 0; i < prmPointers_.size(); i++)
     {
       prmPointers_[i]->mem = prmStart_ + i;
       prmPointers_[i]->val = EEPROM.read(prmPointers_[i]->mem);
@@ -172,12 +168,11 @@ protected:
       SERIAL_LOG1(msg);
 #endif
     }
-    return setLastResult();
+      return setLastResult();
   }
 
 private:
   unsigned int prmStart_;
-  byte prmCount_;
 };
 
 #endif

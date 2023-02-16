@@ -1,7 +1,7 @@
 <a id="library"></a>
 
 # gbj\_appeeprom
-This is an application library, which is used usually as a project library for particular PlatformIO project. It encapsulates the functionality of an `EEPROM` (Electrically Rrasable Programmable Read-Only Memory). The encapsulation provides following advantages:
+This is an application library, which is used usually as a project library for particular PlatformIO project. It encapsulates the functionality of an <abbr title='Electrically Rrasable Programmable Read-Only Memory'>EEPROM</abbr>. The encapsulation provides following advantages:
 
 * Functionality is hidden from the main sketch.
 * The library follows the principle `separation of concerns`.
@@ -9,12 +9,13 @@ This is an application library, which is used usually as a project library for p
 * Update in library is valid for all involved projects.
 * It specifies (inherits from) the parent application library `gbj_appcore`.
 * It utilizes funcionality and error handling from the parent class.
-* The library is not intended for direct instantiation, just as a parent class of project specific libraries (e.g., app\_params).
+* The library is not intended for direct instantiation, just as a parent class of project specific libraries, e.g., `app_eeprom`.
 
 
 ## Fundamental functionality
 * Library works strictly with **byte application parameters only**. If longer parameters are needed, e.g., integer ones, they have to be divided to two (or more) parameters for individual bytes (least and most significant ones).
 * All application parameters are read from EEPROM to the cache in RAM only in their `begin` method within `setup` function of a sketch as an initial configuration at start of a microcontroller. Then only new values of parameters are written to EEPROM, but reading is always from the cache. EEPROM serves as the persistent parameters mirroring.
+* All parameters are defined in a project specific library and passed to this application parent class as a vector of pointers to those parameters.
 
 
 <a id="dependency"></a>
@@ -103,7 +104,7 @@ Parameter periodPublish = { .min = 5, .max = 30, .dft = 12 };
 Constructor creates the class instance object and initiates internal resources.
 
 #### Syntax
-    gbj_appeeprom(unsigned int prmStart, byte prmCount)
+    gbj_appeeprom(unsigned int prmStart)
 
 #### Parameters
 * **prmStart**: The start position in EEPROM for saving application parameters.
@@ -112,11 +113,6 @@ store all application parameters for corresponding EEPROM capacity of
 related platform.
   * *Valid values*: non-negative integer
   * *Default value*: none, but usually 0 defined by a child project specific class
-
-
-* **prmCount**: The number of byte application parameters to process.
-  * *Valid values*: 0 ~ 255
-  * *Default value*: none
 
 #### Returns
 Object enabling EEPROM management.
@@ -129,15 +125,15 @@ Object enabling EEPROM management.
 ## begin()
 
 #### Description
-The initialization method, which should be located in the begin method of a derived class of a project specific library (e.g, app\_params) called in the setup section of a sketch.
-- The method indexes parameters from provided list of parameter pointers.
+The initialization method, which should be located in the begin method of a derived class of a project specific library called in the setup section of a sketch.
+- The method indexes parameters from provided vector of parameter pointers.
 - It reads values from the EEPROM for all provided parameters and caches them.
 
 #### Syntax
-    ResultCodes begin(Parameter **prmPointers)
+    ResultCodes begin(const std::vector<Parameter *>& prmPointers)
 
 #### Parameters
-* **prmPointers**: Pointer to array of pointers with application parameters definitions.
+* **prmPointers**: Pointer to a vector of pointers with application parameters definitions.
   * *Valid values*: system address range
   * *Default value*: none
 
@@ -182,9 +178,6 @@ None
 #### Returns
 The starting position in the EEPROM for storing application parameters.
 
-#### See also
-[getPrmCount()](#getPrmCount)
-
 [Back to interface](#interface)
 
 
@@ -193,7 +186,7 @@ The starting position in the EEPROM for storing application parameters.
 ## getPrmCount()
 
 #### Description
-The method returns number of application parameters that should be stored in the EEPROM. This number is initiated in the [constructor](#gbj_appeeprom).
+The method returns number of application parameters that should be stored in the EEPROM. This number is derived from a vector of parameters..
 
 #### Syntax
     byte getPrmCount()
@@ -205,6 +198,6 @@ None
 The number of byte application parameters in EEPROM.
 
 #### See also
-[getPrmStart()](#getPrmStart)
+[begin()](#begin)
 
 [Back to interface](#interface)
