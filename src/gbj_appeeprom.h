@@ -103,10 +103,7 @@ public:
 
     RETURN: object
   */
-  inline explicit gbj_appeeprom(unsigned int prmStart)
-  {
-    prmStart_ = prmStart;
-  }
+  inline explicit gbj_appeeprom(unsigned int prmStart) { prmStart_ = prmStart; }
 
   // Reset all parameters to default values
   void reset()
@@ -143,7 +140,7 @@ protected:
 
     RETURN: Result code.
   */
-  inline ResultCodes begin(const std::vector<Parameter *>& prmPointers)
+  inline ResultCodes begin(const std::vector<Parameter *> &prmPointers)
   {
     prmPointers_ = prmPointers;
     SERIAL_TITLE("begin");
@@ -168,7 +165,7 @@ protected:
       SERIAL_LOG1(msg);
 #endif
     }
-      return setLastResult();
+    return setLastResult();
   }
 
 private:
