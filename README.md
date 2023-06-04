@@ -1,7 +1,7 @@
 <a id="library"></a>
 
 # gbj\_appeeprom
-This is an application library, which is used usually as a project library for particular PlatformIO project. It encapsulates the functionality of an <abbr title='Electrically Rrasable Programmable Read-Only Memory'>EEPROM</abbr>. The encapsulation provides following advantages:
+This is an application library, which is used usually as a project library for particular PlatformIO project. It encapsulates the functionality of an <abbr title='Electrically Erasable Programmable Read-Only Memory'>EEPROM</abbr>. The encapsulation provides following advantages:
 
 * Functionality is hidden from the main sketch.
 * The library follows the principle `separation of concerns`.
