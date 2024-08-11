@@ -37,11 +37,10 @@
 class gbj_appeeprom : public gbj_appcore
 {
 public:
-  const char *VERSION = "GBJ_APPEEPROM 1.2.0";
-
   struct Parameter
   {
     byte val;
+    unsigned long tsSet = 0;
     unsigned int mem;
     const byte min;
     const byte max;
@@ -52,8 +51,8 @@ public:
       value = (value < min || value > max) ? dft : value;
       if (val != value)
       {
+        tsSet = millis();
         val = value;
-        save();
       };
       return get();
     }
@@ -67,7 +66,7 @@ public:
       {
         val++;
       }
-      save();
+      tsSet = millis();
       return get();
     }
     byte cycleDown()
@@ -80,7 +79,7 @@ public:
       {
         val--;
       }
-      save();
+      tsSet = millis();
       return get();
     }
     void save()
@@ -88,6 +87,7 @@ public:
       EEPROM.write(mem, get());
 #if defined(ESP8266) || defined(ESP32)
       EEPROM.commit();
+      tsSet = 0;
 #endif
     }
   };
@@ -106,22 +106,51 @@ public:
   inline explicit gbj_appeeprom(unsigned int prmStart) { prmStart_ = prmStart; }
 
   // Reset all parameters to default values
-  void reset()
+  inline void reset()
   {
-    SERIAL_TITLE("reset");
-    for (byte i = 0; i < prmPointers_.size(); i++)
+    for (Parameter *prm : prmPointers_)
     {
-      prmPointers_[i]->set(0xFF);
-#ifndef SERIAL_NODEBUG
-      String msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
-      SERIAL_LOG1(msg);
-#endif
+      prm->set(0xFF);
+    }
+    list();
+  }
+
+  /*
+      Delayed writting to EEPROM.
+
+      DESCRIPTION:
+      The method stores those parameters to EEPROM, which has been changes not
+      sooner than preddefined time period.
+      - The method should be called in the LOOP section of a sketch.
+
+      PARAMETERS: none
+
+      RETURN: none
+  */
+  inline void run()
+  {
+    for (Parameter *prm : prmPointers_)
+    {
+      if (prm->tsSet > 0 && millis() - prm->tsSet > interval_)
+      {
+        prm->save();
+      }
     }
   }
+
+  // Setters
+  // Set store delay period as unsigned long in milliseconds
+  inline void setPeriod(unsigned long period = Timing::INTERVAL_SAVE)
+  {
+    interval_ = period;
+  }
+  // Set store delay interval as String in seconds
+  inline void setPeriod(String periodSec) { interval_ = periodSec.toInt(); }
 
   // Getters
   inline unsigned int getPrmStart() { return prmStart_; }
   inline byte getPrmCount() { return prmPointers_.size(); }
+  inline unsigned long getPeriod() { return interval_; }
 
 protected:
   std::vector<Parameter *> prmPointers_;
@@ -143,7 +172,7 @@ protected:
   inline ResultCodes begin(const std::vector<Parameter *> &prmPointers)
   {
     prmPointers_ = prmPointers;
-    SERIAL_TITLE("begin");
+    interval_ = Timing::INTERVAL_SAVE;
     unsigned int eeprom = 4096;
 #if defined(__AVR_ATmega328P__)
     eeprom = 1024;
@@ -153,23 +182,50 @@ protected:
 #if defined(ESP8266) || defined(ESP32)
     EEPROM.begin(constrain(prmPointers_.size(), 4, 4096));
 #endif
-    prmStart_ = min(prmStart_, eeprom - prmPointers_.size());
     // Read parameters from EEPROM
-    for (byte i = 0; i < prmPointers_.size(); i++)
+    prmStart_ = min(prmStart_, eeprom - prmPointers_.size());
+    unsigned int pos = prmStart_;
+    for (Parameter *prm : prmPointers_)
     {
-      prmPointers_[i]->mem = prmStart_ + i;
-      prmPointers_[i]->val = EEPROM.read(prmPointers_[i]->mem);
-      prmPointers_[i]->set(prmPointers_[i]->val);
-#ifndef SERIAL_NODEBUG
-      String msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
-      SERIAL_LOG1(msg);
-#endif
+      prm->mem = pos++;
+      prm->val = EEPROM.read(prm->mem);
+      prm->set(prm->val);
     }
+    // List parameters
+    list();
     return setLastResult();
   }
 
+  /*
+      List all registered parameters.
+
+      DESCRIPTION:
+      The method outputs all parameters' values from EEPROM if debug is enabled.
+
+      PARAMETERS: none
+
+      RETURN: none
+  */
+  inline void list()
+  {
+#ifndef SERIAL_NODEBUG
+    String msg;
+    for (byte i = 0; i < prmPointers_.size(); i++)
+    {
+      msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
+      SERIAL_LOG1(msg);
+    }
+#endif
+  }
+
 private:
+  enum Timing : unsigned long
+  {
+    // Default store delay interval
+    INTERVAL_SAVE = 3000,
+  };
   unsigned int prmStart_;
+  unsigned long interval_;
 };
 
 #endif

@@ -15,7 +15,16 @@ This is an application library, which is used usually as a project library for p
 ## Fundamental functionality
 * Library works strictly with **byte application parameters only**. If longer parameters are needed, e.g., integer ones, they have to be divided to two (or more) parameters for individual bytes (least and most significant ones).
 * All application parameters are read from EEPROM to the cache in RAM only in their `begin` method within `setup` function of a sketch as an initial configuration at start of a microcontroller. Then only new values of parameters are written to EEPROM, but reading is always from the cache. EEPROM serves as the persistent parameters mirroring.
+* The saving changed parameters values are delayed by a predefined or set time interval in order not to prevent useless writing to the EEPROM in quick tempo, e.g., by cycling a parameter's value. It should be realized by the method [run()](#run).
 * All parameters are defined in a project specific library and passed to this application parent class as a vector of pointers to those parameters.
+
+
+<a id="internals"></a>
+
+## Internal parameters
+Internal parameters are hard-coded in the library as enumerations and none of them have setters or getters associated.
+
+* **Default delay store period** (`3 seconds`): It is a time period since recent change of a parameter's value, after which that change is saved to the EEPROM.
 
 
 <a id="dependency"></a>
@@ -39,14 +48,6 @@ This is an application library, which is used usually as a project library for p
 * **Particle.h**: Includes alternative (C++) data type definitions.
 
 
-<a id="constants"></a>
-
-## Constants
-* **VERSION**: Name and semantic version of the library.
-
-Other constants, enumerations, result codes, and error codes are inherited from the parent library.
-
-
 <a id="interface"></a>
 
 ## Custom data types
@@ -56,10 +57,13 @@ Other constants, enumerations, result codes, and error codes are inherited from 
 * [gbj_appeeprom()](#gbj_appeeprom)
 * [begin()](#begin)
 * [reset()](#reset)
+* [run()](#run)
 
-### Getters
+### Getters and Setters
 * [getPrmStart()](#getPrmStart)
 * [getPrmCount()](#getPrmCount)
+* [getPeriod()](#getPeriod)
+* [setPeriod()](#setPeriod)
 
 
 <a id="parameter"></a>
@@ -75,6 +79,7 @@ The structure with members and member methods as a template of an application pa
 
 #### Members
 * **byte val**: Parameter value as a cache.
+* **unsigned long tsSet**: Elapsed time in milliseconds from the boot, at wich was a parameter's value change recently.
 * **unsigned int mem**: Byte position of a parameter in the EEPROM.
 * **const byte min**: Minimal valid value of a parameter. It is initialized at a parameter definition.
 * **const byte max**: Maximal valid value of a parameter. It is initialized at a parameter definition.
@@ -162,6 +167,29 @@ None
 [Back to interface](#interface)
 
 
+<a id="run"></a>
+
+## run()
+
+#### Description
+The method save parameters' values that have been changed not sooner than current delayed store period.
+* The method should be called frequently, usually in the loop function of a main sketch.
+
+#### Syntax
+    void run()
+
+#### Parameters
+None
+
+#### Returns
+None
+
+#### See also
+[setPeriod()](#setPeriod)
+
+[Back to interface](#interface)
+
+
 <a id="getPrmStart"></a>
 
 ## getPrmStart()
@@ -199,5 +227,61 @@ The number of byte application parameters in EEPROM.
 
 #### See also
 [begin()](#begin)
+
+[Back to interface](#interface)
+
+
+<a id="getPeriod"></a>
+
+## getPeriod()
+
+#### Description
+The method returns current delayed store period.
+
+#### Syntax
+    unsigned long getPeriod()
+
+#### Parameters
+None
+
+#### Returns
+Current delayed store period in milliseconds.
+
+#### See also
+[setPeriod()](#setPeriod)
+
+[Back to interface](#interface)
+
+
+<a id="setPeriod"></a>
+
+## setPeriod()
+
+#### Description
+The overloaded method sets a new delayed store period in milliseconds or seconds.
+* The method with numerical input argument is aimed for input in milliseconds.
+* The method with textual input argument is aimed for input in seconds. It is useful with conjunction with a project data hub, which data has always string data type.
+* No input argument sets the [internal default period](#internals), which is setter's default value.
+
+
+#### Syntax
+    void setPeriod(unsigned long period)
+    void setPeriod(String periodSec)
+
+#### Parameters
+* **period**: Duration of the waiting period in milliseconds.
+  * *Valid values*: 0 ~ 2^32 - 1
+  * *Default value*: 3000
+
+
+* **periodSec**: Duration of the waiting period in seconds declared as string.
+  * *Valid values*: String
+  * *Default value*: none
+
+#### Returns
+None
+
+#### See also
+[getPeriod()](#getPeriod)
 
 [Back to interface](#interface)
