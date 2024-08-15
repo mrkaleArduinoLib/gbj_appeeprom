@@ -17,15 +17,11 @@
 #ifndef GBJ_APPEEPROM_H
 #define GBJ_APPEEPROM_H
 
+#include <Arduino.h>
 #if defined(__AVR__)
-  #include <Arduino.h>
   #include <inttypes.h>
-#elif defined(ESP8266)
-  #include <Arduino.h>
 #elif defined(ESP32)
-  #include <Arduino.h>
-#elif defined(PARTICLE)
-  #include <Particle.h>
+  #include <vector>
 #endif
 #include "gbj_appcore.h"
 #include "gbj_serial_debug.h"
@@ -37,10 +33,12 @@
 class gbj_appeeprom : public gbj_appcore
 {
 public:
+  // Don't use any member initialization values in order to initialize instances
+  // by braced initialization lists later.
   struct Parameter
   {
     byte val;
-    unsigned long tsSet = 0;
+    unsigned long tsSet;
     unsigned int mem;
     const byte min;
     const byte max;
