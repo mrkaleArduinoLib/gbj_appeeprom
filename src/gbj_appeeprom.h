@@ -85,8 +85,9 @@ public:
       EEPROM.write(mem, get());
 #if defined(ESP8266) || defined(ESP32)
       EEPROM.commit();
-      tsSet = 0;
 #endif
+      tsSet = 0;
+      SERIAL_LOG4("Saved <", mem, ">: ", get())
     }
   };
 
