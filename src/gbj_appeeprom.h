@@ -122,15 +122,17 @@ public:
       sooner than preddefined time period.
       - The method should be called in the LOOP section of a sketch.
 
-      PARAMETERS: none
+      PARAMETERS:
+      flForce - Flag about immediate saving to EEPROM. It is needed right before
+      MCU restart.
 
       RETURN: none
   */
-  inline void run()
+  inline void run(bool flForce = false)
   {
     for (Parameter *prm : prmPointers_)
     {
-      if (prm->tsSet > 0 && millis() - prm->tsSet > interval_)
+      if (flForce || (prm->tsSet > 0 && millis() - prm->tsSet > interval_))
       {
         prm->save();
       }

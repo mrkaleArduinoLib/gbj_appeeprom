@@ -172,14 +172,17 @@ None
 ## run()
 
 #### Description
-The method save parameters' values that have been changed not sooner than current delayed store period.
+The method save parameters' values that have been changed not sooner than current delayed store period until it is not forced immediately.
 * The method should be called frequently, usually in the loop function of a main sketch.
 
 #### Syntax
-    void run()
+    void run(bool flForce)
 
 #### Parameters
-None
+* **flForce**: Flag about immediate saving to EEPROM. It is needed right before MCU restart.
+  * *Valid values*: true, false
+  * *Default value*: false
+
 
 #### Returns
 None
