@@ -44,9 +44,6 @@ Internal parameters are hard-coded in the library as enumerations and none of th
 #### Espressif ESP32 platform
 * **Arduino.h**: Main include file for the Arduino platform.
 
-#### Particle platform
-* **Particle.h**: Includes alternative (C++) data type definitions.
-
 
 <a id="interface"></a>
 
@@ -73,6 +70,7 @@ Internal parameters are hard-coded in the library as enumerations and none of th
 #### Description
 The structure with members and member methods as a template of an application parameter.
 * An application parameter as an instance of this structure acts as a parameter cache for the EEPROM.
+* The library class contains a vector of parameters. The vector is protected and initially empty, so that it is accessable from derived (child) classes and parameters (data items) should be defined in those classes, usually in begin methods.
 * Only changed parameter values are really written to the EEPROM.
 * A parameter value is normally read from the cache only.
 * The parameter cache is initialized by reading parameter value from EEPROM just at setup of an application.
@@ -130,20 +128,17 @@ Object enabling EEPROM management.
 ## begin()
 
 #### Description
-The initialization method, which should be located in the begin method of a derived class of a project specific library called in the setup section of a sketch.
-- The method indexes parameters from provided vector of parameter pointers.
+The initialization method, which should be located in the begin method of a derived class, which should add parameters to the vector of parameters and should be called in the setup section of a sketch.
 - It reads values from the EEPROM for all provided parameters and caches them.
 
 #### Syntax
-    ResultCodes begin(const std::vector<Parameter *>& prmPointers)
+    void begin()
 
 #### Parameters
-* **prmPointers**: Pointer to a vector of pointers with application parameters definitions.
-  * *Valid values*: system address range
-  * *Default value*: none
+None
 
 #### Returns
-Some of [result or error codes](#constants) from the parent class.
+None
 
 [Back to interface](#interface)
 
@@ -172,7 +167,7 @@ None
 ## run()
 
 #### Description
-The method save parameters' values that have been changed not sooner than current delayed store period until it is not forced immediately.
+The method saves parameters' values that have been changed not sooner than current delayed store period until it is not forced immediately.
 * The method should be called frequently, usually in the loop function of a main sketch.
 
 #### Syntax

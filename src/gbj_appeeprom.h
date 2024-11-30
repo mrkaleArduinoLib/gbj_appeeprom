@@ -107,7 +107,7 @@ public:
   // Reset all parameters to default values
   inline void reset()
   {
-    for (Parameter *prm : prmPointers_)
+    for (Parameter *prm : prmPointers)
     {
       prm->set(0xFF);
     }
@@ -130,7 +130,7 @@ public:
   */
   inline void run(bool flForce = false)
   {
-    for (Parameter *prm : prmPointers_)
+    for (Parameter *prm : prmPointers)
     {
       if (flForce || (prm->tsSet > 0 && millis() - prm->tsSet > interval_))
       {
@@ -139,7 +139,8 @@ public:
     }
   }
 
-  // Setters
+  // Setters & Getter
+
   // Set store delay period as unsigned long in milliseconds
   inline void setPeriod(unsigned long period = Timing::INTERVAL_SAVE)
   {
@@ -147,76 +148,35 @@ public:
   }
   // Set store delay interval as String in seconds
   inline void setPeriod(String periodSec) { interval_ = periodSec.toInt(); }
-
-  // Getters
+  // Return start position in the EEPROM
   inline unsigned int getPrmStart() { return prmStart_; }
-  inline byte getPrmCount() { return prmPointers_.size(); }
+  // Return number of parameters in the EEPROM
+  inline byte getPrmCount() { return prmPointers.size(); }
+  // Return time interval in milliseconds for delayed savings to the EEPROM
   inline unsigned long getPeriod() { return interval_; }
 
 protected:
-  std::vector<Parameter *> prmPointers_;
-  /*
-    Initialization.
-
-    DESCRIPTION:
-    The method should be called in the SETUP section of a sketch. It reads
-    parameters from EEPROM.
-
-    PARAMETERS:
-    prmPointers - Array of pointers to parameters' structures.
-      - Data type: pointer to Parameter
-      - Default value: none
-      - Limited range: none
-
-    RETURN: Result code.
-  */
-  inline ResultCodes begin(const std::vector<Parameter *> &prmPointers)
+  std::vector<Parameter *> prmPointers;
+  inline void begin()
   {
-    prmPointers_ = prmPointers;
-    interval_ = Timing::INTERVAL_SAVE;
     unsigned int eeprom = 4096;
 #if defined(__AVR_ATmega328P__)
     eeprom = 1024;
-#elif defined(PARTICLE)
-    eeprom = 2047;
 #endif
 #if defined(ESP8266) || defined(ESP32)
-    EEPROM.begin(constrain(prmPointers_.size(), 4, 4096));
+    EEPROM.begin(constrain(prmPointers.size(), 4, 4096));
 #endif
     // Read parameters from EEPROM
-    prmStart_ = min(prmStart_, eeprom - prmPointers_.size());
+    prmStart_ = min(prmStart_, eeprom - prmPointers.size());
     unsigned int pos = prmStart_;
-    for (Parameter *prm : prmPointers_)
+    for (Parameter *prm : prmPointers)
     {
       prm->mem = pos++;
       prm->val = EEPROM.read(prm->mem);
       prm->set(prm->val);
     }
-    // List parameters
+    setPeriod();
     list();
-    return setLastResult();
-  }
-
-  /*
-      List all registered parameters.
-
-      DESCRIPTION:
-      The method outputs all parameters' values from EEPROM if debug is enabled.
-
-      PARAMETERS: none
-
-      RETURN: none
-  */
-  inline void list()
-  {
-#ifndef SERIAL_NODEBUG
-    String msg;
-    for (byte i = 0; i < prmPointers_.size(); i++)
-    {
-      msg = "[" + String(i) + "]: " + String(prmPointers_[i]->get());
-      SERIAL_LOG1(msg);
-    }
-#endif
   }
 
 private:
@@ -227,6 +187,18 @@ private:
   };
   unsigned int prmStart_;
   unsigned long interval_;
+  // The method outputs all parameters' values from EEPROM if debug is enabled.
+  inline void list()
+  {
+#ifndef SERIAL_NODEBUG
+    String msg;
+    for (byte i = 0; i < prmPointers.size(); i++)
+    {
+      msg = "[" + String(i) + "]: " + String(prmPointers[i]->get());
+      SERIAL_LOG1(msg);
+    }
+#endif
+  }
 };
 
 #endif
